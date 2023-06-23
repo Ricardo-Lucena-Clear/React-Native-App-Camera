@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
-import {View, Text, StatusBar, StyleSheet, TouchableOpacity, Modal,} from 'react-native';
+import {View, Text, StatusBar, StyleSheet, TouchableOpacity, Modal, Image} from 'react-native';
 import { RNCamera } from 'react-native-camera';
 
 export default function App(){
   const [type, setType] = useState(RNCamera.Constants.Type.back);
   const [open, setOpen] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
 
-  function takePicture(){
+  async function takePicture(camera){
+    const options = { quality: 0.5, base64: true };
+    const data = await camera.takePictureAsync(options);
+
+    setCapturedPhoto(data.uri);
     setOpen(true);
+    console.log('FOTO TIRADA CAMERA: ' + data.uri);
+  }
+
+  function toggleCam(){
+    setType(type === RNCamera.Constants.Type.back ? RNCamera.Constants.Type.front : RNCamera.Constants.Type.back)
   }
 
   return(
@@ -32,7 +42,7 @@ export default function App(){
             style={{marginBottom: 35, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between'}}
             >
               <TouchableOpacity
-                onPress={()=> takePicture() }
+                onPress={()=> takePicture(camera) }
                 style={styles.capture}
               >
                 <Text>Tirar foto</Text>
@@ -48,17 +58,33 @@ export default function App(){
         }}
       </RNCamera>
 
+      <View style={styles.camPosition}>
+        <TouchableOpacity onPress={toggleCam}>
+          <Text>Trocar</Text>
+        </TouchableOpacity>
+      </View>
 
-      <Modal animationType="slide" transparent={false} visible={open}>
-        <View style={{flex:1, justifyContent: 'center', alignItems: 'center', margin: 20}} >
-          <TouchableOpacity 
-          style={{margin: 10}}
-          onPress={() => setOpen(false)}
-          >
-            <Text style={{ fontSize: 24}}>Fechar</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+
+      { capturedPhoto && 
+        <Modal animationType="slide" transparent={false} visible={open}>
+          <View style={{flex:1, justifyContent: 'center', alignItems: 'center', margin: 20}} >
+            <TouchableOpacity 
+            style={{margin: 10}}
+            onPress={() => setOpen(false)}
+            >
+              <Text style={{ fontSize: 24}}>Fechar</Text>
+            </TouchableOpacity>
+
+            <Image
+              resizeMode="contain"
+              style={{width: 350, height: 450, borderRadius: 15}}
+              source={{ uri: capturedPhoto }}
+            />
+
+
+          </View>
+        </Modal>
+      }
 
 
     </View>
@@ -83,5 +109,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignSelf: 'center',
     margin: 20,
+  },
+  camPosition:{
+    backgroundColor: '#FFF',
+    borderRadius:5,
+    padding: 10,
+    height: 40,
+    position: 'absolute',
+    right: 25,
+    top: 60,
   }
 });

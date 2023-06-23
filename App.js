@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import {View, Text, StatusBar, StyleSheet, TouchableOpacity, Modal, Image} from 'react-native';
+import {View, Text, StatusBar, StyleSheet, TouchableOpacity, Modal, Image,
+   PermissionsAndroid, Platform } from 'react-native';
 import { RNCamera } from 'react-native-camera';
+import CameraRoll from '@react-native-community/cameraroll';
 
 export default function App(){
   const [type, setType] = useState(RNCamera.Constants.Type.back);
@@ -14,11 +16,47 @@ export default function App(){
     setCapturedPhoto(data.uri);
     setOpen(true);
     console.log('FOTO TIRADA CAMERA: ' + data.uri);
+
+    //Chama funcao salvar a foto no album
+    savePicture(data.uri);
+
+  }
+
+
+  async function hasAndroidPermission(){
+    const permission = PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
+
+    const hasPermission = await PermissionsAndroid.check(permission);
+    if(hasPermission){
+      return true;
+    }
+
+    const status = await PermissionsAndroid.request(permission);
+    return status === 'granted';
+  }
+
+  async function savePicture(data){
+    if(Platform.OS === 'android' && !(await hasAndroidPermission())){
+      return;
+    }
+
+    CameraRoll.save(data, 'photo')
+    .then((res) => {
+      console.log('SALVO COM SUCESSO: ' + res)
+    })
+    .catch((err)=>{
+      console.log('ERROR AO SALVAR: ' + err)
+    })
+
+
   }
 
   function toggleCam(){
     setType(type === RNCamera.Constants.Type.back ? RNCamera.Constants.Type.front : RNCamera.Constants.Type.back)
   }
+
+
+
 
   return(
     <View style={styles.container}>
